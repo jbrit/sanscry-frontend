@@ -1,22 +1,55 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SortableTable } from "@/components/ui/sortable-table"
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
-import { type TargetedProgram, formatDexAddress } from "@/lib/api"
+import type { TargetedProgram } from "@/lib/api"
+import { formatDexName } from "@/lib/dex-mapping"
+import { usePrice } from "@/lib/price-context"
 
 interface TargetedProgramsProps {
   data: TargetedProgram[]
 }
 
 export function TargetedPrograms({ data }: TargetedProgramsProps) {
+  const { formatValue } = usePrice()
+
   // Prepare data for the chart
   const chartData = data.map((item) => ({
-    name: formatDexAddress(item.dex),
+    name: formatDexName(item.dex),
     value: item.sandwich_count,
   }))
 
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"]
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"]
+
+  const columns = [
+    {
+      key: "dex",
+      header: "DEX",
+      cell: (item: TargetedProgram) => <span className="font-medium">{formatDexName(item.dex)}</span>,
+    },
+    {
+      key: "sandwich_count",
+      header: "Count",
+      cell: (item: TargetedProgram) => item.sandwich_count,
+      sortable: true,
+      sortKey: "sandwich_count" as keyof TargetedProgram,
+    },
+    {
+      key: "total_profit",
+      header: "Total Profit",
+      cell: (item: TargetedProgram) => formatValue(item.total_profit),
+      sortable: true,
+      sortKey: "total_profit" as keyof TargetedProgram,
+    },
+    {
+      key: "unique_pools",
+      header: "Unique Pools",
+      cell: (item: TargetedProgram) => item.unique_pools,
+      sortable: true,
+      sortKey: "unique_pools" as keyof TargetedProgram,
+    },
+  ]
 
   return (
     <Card className="col-span-1">
@@ -47,26 +80,8 @@ export function TargetedPrograms({ data }: TargetedProgramsProps) {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>DEX</TableHead>
-              <TableHead>Count</TableHead>
-              <TableHead>Total Profit</TableHead>
-              <TableHead>Unique Pools</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.dex}>
-                <TableCell className="font-medium">{formatDexAddress(item.dex)}</TableCell>
-                <TableCell>{item.sandwich_count}</TableCell>
-                <TableCell>{item.total_profit.toFixed(4)}</TableCell>
-                <TableCell>{item.unique_pools}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+
+        <SortableTable data={data} columns={columns} />
       </CardContent>
     </Card>
   )

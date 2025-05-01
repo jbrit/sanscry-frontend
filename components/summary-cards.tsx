@@ -2,6 +2,7 @@
 
 import { BarChart3, CircleDollarSign, Target, Wallet } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { usePrice } from "@/lib/price-context"
 
 interface SummaryCardsProps {
   data: {
@@ -13,6 +14,8 @@ interface SummaryCardsProps {
 }
 
 export function SummaryCards({ data }: SummaryCardsProps) {
+  const { formatValue } = usePrice()
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -31,7 +34,7 @@ export function SummaryCards({ data }: SummaryCardsProps) {
           <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.totalProfit.toFixed(2)}</div>
+          <div className="text-2xl font-bold">{formatValue(data.totalProfit)}</div>
           <p className="text-xs text-muted-foreground">Value extracted from victims</p>
         </CardContent>
       </Card>

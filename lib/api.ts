@@ -252,7 +252,7 @@ export function formatBotAddress(address: string): string {
 export function calculateSummaryStats(data: DashboardData) {
   const totalSandwiches = data.profit_token_stats.reduce((sum, item) => sum + item.total_sandwiches, 0)
 
-  const totalProfit = data.profit_token_stats.reduce((sum, item) => sum + item.total_profit, 0)
+  const totalProfit = data.profit_token_stats.reduce((sum, item) => item.profit_token == 'So11111111111111111111111111111111111111112' ? sum + item.total_profit : sum, 0)
 
   const uniqueVictims = data.profit_token_stats.reduce((sum, item) => sum + item.unique_victims, 0)
 

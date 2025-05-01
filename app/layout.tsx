@@ -1,6 +1,7 @@
 import type React from "react"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { PriceProvider } from "@/lib/price-context"
 
 export const metadata = {
   title: "Sanscry Dashboard",
@@ -17,7 +18,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          {children}
+          <PriceProvider>{children}</PriceProvider>
         </ThemeProvider>
       </body>
     </html>

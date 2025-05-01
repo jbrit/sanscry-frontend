@@ -1,21 +1,54 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SortableTable } from "@/components/ui/sortable-table"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { type ProfitToken, formatTokenAddress } from "@/lib/api"
+import type { ProfitToken } from "@/lib/api"
+import { formatTokenAddress } from "@/lib/dex-mapping"
+import { usePrice } from "@/lib/price-context"
 
 interface ProfitTokenStatsProps {
   data: ProfitToken[]
 }
 
 export function ProfitTokenStats({ data }: ProfitTokenStatsProps) {
+  const { formatValue } = usePrice()
+
   // Prepare data for the chart
   const chartData = data.map((item) => ({
     token: formatTokenAddress(item.profit_token),
     profit: item.total_profit,
     sandwiches: item.total_sandwiches,
   }))
+
+  const columns = [
+    {
+      key: "token",
+      header: "Token",
+      cell: (item: ProfitToken) => <span className="font-medium">{formatTokenAddress(item.profit_token)}</span>,
+    },
+    {
+      key: "total_sandwiches",
+      header: "Sandwiches",
+      cell: (item: ProfitToken) => item.total_sandwiches,
+      sortable: true,
+      sortKey: "total_sandwiches" as keyof ProfitToken,
+    },
+    {
+      key: "total_profit",
+      header: "Total Profit",
+      cell: (item: ProfitToken) => formatValue(item.total_profit),
+      sortable: true,
+      sortKey: "total_profit" as keyof ProfitToken,
+    },
+    {
+      key: "unique_victims",
+      header: "Victims",
+      cell: (item: ProfitToken) => item.unique_victims,
+      sortable: true,
+      sortKey: "unique_victims" as keyof ProfitToken,
+    },
+  ]
 
   return (
     <Card className="col-span-1">
@@ -38,26 +71,8 @@ export function ProfitTokenStats({ data }: ProfitTokenStatsProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Token</TableHead>
-              <TableHead>Sandwiches</TableHead>
-              <TableHead>Total Profit</TableHead>
-              <TableHead>Victims</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.profit_token}>
-                <TableCell className="font-medium">{formatTokenAddress(item.profit_token)}</TableCell>
-                <TableCell>{item.total_sandwiches}</TableCell>
-                <TableCell>{item.total_profit.toFixed(2)}</TableCell>
-                <TableCell>{item.unique_victims}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+
+        <SortableTable data={data} columns={columns} />
       </CardContent>
     </Card>
   )

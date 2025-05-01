@@ -1,9 +1,10 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SortableTable } from "@/components/ui/sortable-table"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { type AttackFrequency as AttackFrequencyType, formatDexAddress } from "@/lib/api"
+import type { AttackFrequency as AttackFrequencyType } from "@/lib/api"
+import { formatDexName } from "@/lib/dex-mapping"
 
 interface AttackFrequencyProps {
   data: AttackFrequencyType[]
@@ -12,11 +13,40 @@ interface AttackFrequencyProps {
 export function AttackFrequency({ data }: AttackFrequencyProps) {
   // Prepare data for the chart
   const chartData = data.map((item) => ({
-    dex: formatDexAddress(item.dex),
+    dex: formatDexName(item.dex),
     attacks: item.total_attacks,
     attackers: item.unique_attackers,
     avgPerBlock: item.avg_attacks_per_block,
   }))
+
+  const columns = [
+    {
+      key: "dex",
+      header: "DEX",
+      cell: (item: AttackFrequencyType) => <span className="font-medium">{formatDexName(item.dex)}</span>,
+    },
+    {
+      key: "total_attacks",
+      header: "Total Attacks",
+      cell: (item: AttackFrequencyType) => item.total_attacks,
+      sortable: true,
+      sortKey: "total_attacks" as keyof AttackFrequencyType,
+    },
+    {
+      key: "unique_attackers",
+      header: "Unique Attackers",
+      cell: (item: AttackFrequencyType) => item.unique_attackers,
+      sortable: true,
+      sortKey: "unique_attackers" as keyof AttackFrequencyType,
+    },
+    {
+      key: "avg_attacks_per_block",
+      header: "Avg Per Block",
+      cell: (item: AttackFrequencyType) => item.avg_attacks_per_block.toFixed(3),
+      sortable: true,
+      sortKey: "avg_attacks_per_block" as keyof AttackFrequencyType,
+    },
+  ]
 
   return (
     <Card className="col-span-1">
@@ -40,26 +70,8 @@ export function AttackFrequency({ data }: AttackFrequencyProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>DEX</TableHead>
-              <TableHead>Total Attacks</TableHead>
-              <TableHead>Unique Attackers</TableHead>
-              <TableHead>Avg Per Block</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.dex}>
-                <TableCell className="font-medium">{formatDexAddress(item.dex)}</TableCell>
-                <TableCell>{item.total_attacks}</TableCell>
-                <TableCell>{item.unique_attackers}</TableCell>
-                <TableCell>{item.avg_attacks_per_block.toFixed(3)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+
+        <SortableTable data={data} columns={columns} />
       </CardContent>
     </Card>
   )

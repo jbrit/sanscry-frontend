@@ -5,7 +5,7 @@ import { calculateSummaryStats } from "@/lib/api"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, BarChart3, Github, RefreshCw } from "lucide-react"
+import { AlertCircle, BarChart3, Github, RefreshCw, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SummaryCards } from "@/components/summary-cards"
 import { ProfitTokenStats } from "@/components/profit-token-stats"
@@ -15,6 +15,8 @@ import { ExploitedPools } from "@/components/exploited-pools"
 import { BotProfits } from "@/components/bot-profits"
 import { AttackFrequency } from "@/components/attack-frequency"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { CurrencyToggle } from "@/components/currency-toggle"
+import { SandwichHighlights } from "@/components/sandwich-highlights"
 
 export function Dashboard() {
   const { data, loading, error, refetch } = useData()
@@ -43,6 +45,7 @@ export function Dashboard() {
           <h1 className="text-xl font-semibold">Sanscry Dashboard</h1>
         </div>
         <div className="ml-auto flex items-center gap-4">
+          <CurrencyToggle />
           <Button variant="outline" size="sm" asChild>
             <a
               href="https://github.com/jbrit/sanscry"
@@ -52,6 +55,17 @@ export function Dashboard() {
             >
               <Github className="h-4 w-4" />
               <span>GitHub</span>
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href="https://sanscry-auo55.kinsta.app/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>API Docs</span>
             </a>
           </Button>
           <Button variant="outline" size="icon" onClick={() => refetch()} disabled={loading}>
@@ -67,6 +81,8 @@ export function Dashboard() {
         ) : data ? (
           <div className="flex flex-col gap-6">
             <SummaryCards data={calculateSummaryStats(data)} />
+
+            <SandwichHighlights />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <ProfitTokenStats data={data.profit_token_stats} />
@@ -105,6 +121,16 @@ function LoadingSkeleton() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-5 w-32 mb-1" />
+          <Skeleton className="h-4 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[200px] w-full" />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[...Array(4)].map((_, i) => (

@@ -1,21 +1,54 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SortableTable } from "@/components/ui/sortable-table"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { type TargetedToken, formatTokenAddress } from "@/lib/api"
+import type { TargetedToken } from "@/lib/api"
+import { formatTokenAddress } from "@/lib/dex-mapping"
+import { usePrice } from "@/lib/price-context"
 
 interface TargetedTokensProps {
   data: TargetedToken[]
 }
 
 export function TargetedTokens({ data }: TargetedTokensProps) {
+  const { formatValue } = usePrice()
+
   // Prepare data for the chart - take top 5 for clarity
   const chartData = data.slice(0, 5).map((item) => ({
     token: formatTokenAddress(item.token),
     count: item.sandwich_count,
     profit: item.total_profit,
   }))
+
+  const columns = [
+    {
+      key: "token",
+      header: "Token",
+      cell: (item: TargetedToken) => <span className="font-medium">{formatTokenAddress(item.token)}</span>,
+    },
+    {
+      key: "sandwich_count",
+      header: "Count",
+      cell: (item: TargetedToken) => item.sandwich_count,
+      sortable: true,
+      sortKey: "sandwich_count" as keyof TargetedToken,
+    },
+    {
+      key: "total_profit",
+      header: "Total Profit",
+      cell: (item: TargetedToken) => formatValue(item.total_profit),
+      sortable: true,
+      sortKey: "total_profit" as keyof TargetedToken,
+    },
+    {
+      key: "unique_attackers",
+      header: "Attackers",
+      cell: (item: TargetedToken) => item.unique_attackers,
+      sortable: true,
+      sortKey: "unique_attackers" as keyof TargetedToken,
+    },
+  ]
 
   return (
     <Card className="col-span-1">
@@ -38,26 +71,8 @@ export function TargetedTokens({ data }: TargetedTokensProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Token</TableHead>
-              <TableHead>Count</TableHead>
-              <TableHead>Total Profit</TableHead>
-              <TableHead>Attackers</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.token}>
-                <TableCell className="font-medium">{formatTokenAddress(item.token)}</TableCell>
-                <TableCell>{item.sandwich_count}</TableCell>
-                <TableCell>{item.total_profit.toFixed(4)}</TableCell>
-                <TableCell>{item.unique_attackers}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+
+        <SortableTable data={data} columns={columns} />
       </CardContent>
     </Card>
   )

@@ -1,21 +1,54 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SortableTable } from "@/components/ui/sortable-table"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { type BotProfit, formatBotAddress } from "@/lib/api"
+import type { BotProfit } from "@/lib/api"
+import { formatBotAddress } from "@/lib/dex-mapping"
+import { usePrice } from "@/lib/price-context"
 
 interface BotProfitsProps {
   data: BotProfit[]
 }
 
 export function BotProfits({ data }: BotProfitsProps) {
+  const { formatValue } = usePrice()
+
   // Prepare data for the chart
   const chartData = data.map((item) => ({
     bot: formatBotAddress(item.bot),
     profit: item.total_profit,
     avgProfit: item.avg_profit_per_sandwich,
   }))
+
+  const columns = [
+    {
+      key: "bot",
+      header: "Bot",
+      cell: (item: BotProfit) => <span className="font-medium">{formatBotAddress(item.bot)}</span>,
+    },
+    {
+      key: "total_profit",
+      header: "Total Profit",
+      cell: (item: BotProfit) => formatValue(item.total_profit),
+      sortable: true,
+      sortKey: "total_profit" as keyof BotProfit,
+    },
+    {
+      key: "sandwich_count",
+      header: "Count",
+      cell: (item: BotProfit) => item.sandwich_count,
+      sortable: true,
+      sortKey: "sandwich_count" as keyof BotProfit,
+    },
+    {
+      key: "avg_profit_per_sandwich",
+      header: "Avg Profit",
+      cell: (item: BotProfit) => formatValue(item.avg_profit_per_sandwich),
+      sortable: true,
+      sortKey: "avg_profit_per_sandwich" as keyof BotProfit,
+    },
+  ]
 
   return (
     <Card className="col-span-1">
@@ -37,26 +70,8 @@ export function BotProfits({ data }: BotProfitsProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Bot</TableHead>
-              <TableHead>Total Profit</TableHead>
-              <TableHead>Count</TableHead>
-              <TableHead>Avg Profit</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.bot}>
-                <TableCell className="font-medium">{formatBotAddress(item.bot)}</TableCell>
-                <TableCell>{item.total_profit.toFixed(4)}</TableCell>
-                <TableCell>{item.sandwich_count}</TableCell>
-                <TableCell>{item.avg_profit_per_sandwich.toFixed(4)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+
+        <SortableTable data={data} columns={columns} />
       </CardContent>
     </Card>
   )

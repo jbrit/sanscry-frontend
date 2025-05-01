@@ -212,20 +212,11 @@ const mockData: DashboardData = {
   ],
 }
 
-// API configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || ""
-const USE_MOCK_DATA = !API_URL || process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true"
-
 // Data fetching function
 export async function fetchDashboardData(): Promise<DashboardData> {
-  // If no API URL is provided or mock data is explicitly requested, return mock data
-  if (USE_MOCK_DATA) {
-    console.log("Using mock data")
-    return mockData
-  }
-
   try {
-    const response = await fetch(`${API_URL}/api/dashboard`)
+    // Use our local API endpoint which proxies to the external API
+    const response = await fetch("/api/dashboard")
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`)

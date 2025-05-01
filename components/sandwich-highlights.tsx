@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SortableTable } from "@/components/ui/sortable-table"
 import { Button } from "@/components/ui/button"
 import { usePrice } from "@/lib/price-context"
-import { formatDexName, formatPoolAddress, formatBotAddress } from "@/lib/dex-mapping"
+import { formatDexName, formatPoolAddress } from "@/lib/dex-mapping"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ExternalLink, Clock } from "lucide-react"
+import { Clock, Eye } from "lucide-react"
 import Link from "next/link"
 
 interface SandwichHighlight {
@@ -36,7 +36,9 @@ export function SandwichHighlights() {
   const fetchHighlights = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/highlights")
+      const response = await fetch("/api/highlights", {
+        cache: "no-store",
+      })
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`)
@@ -66,12 +68,7 @@ export function SandwichHighlights() {
     {
       key: "sandwich_id",
       header: "ID",
-      cell: (item: SandwichHighlight) => (
-        <Link href={`/sandwich/${item.sandwich_id}`} className="text-blue-500 hover:underline flex items-center gap-1">
-          {item.sandwich_id.slice(0, 8)}...
-          <ExternalLink className="h-3 w-3" />
-        </Link>
-      ),
+      cell: (item: SandwichHighlight) => item.sandwich_id.slice(0, 8) + "...",
     },
     {
       key: "profit",
@@ -98,16 +95,21 @@ export function SandwichHighlights() {
       cell: (item: SandwichHighlight) => formatPoolAddress(item.pool),
     },
     {
-      key: "bot",
-      header: "Bot",
-      cell: (item: SandwichHighlight) => formatBotAddress(item.bot),
-    },
-    {
       key: "time",
       header: "Time",
       cell: (item: SandwichHighlight) => new Date(item.block_time * 1000).toLocaleString(),
       sortable: true,
       sortKey: "block_time" as keyof SandwichHighlight,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      cell: (item: SandwichHighlight) => (
+        <Link href={`/sandwich/${item.sandwich_id}`} className="text-blue-500 hover:underline flex items-center gap-1">
+          <Eye className="h-4 w-4 mr-1" />
+          View Details
+        </Link>
+      ),
     },
   ]
 
@@ -117,7 +119,7 @@ export function SandwichHighlights() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <div>
             <CardTitle>Sandwich Highlights</CardTitle>
             <CardDescription>Latest and most profitable sandwich attacks</CardDescription>

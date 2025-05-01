@@ -5,7 +5,7 @@ const API_URL = "https://sanscry-auo55.kinsta.app/highlights"
 export async function GET() {
   try {
     const response = await fetch(API_URL, {
-      next: { revalidate: 10 }, // Cache for 10 seconds
+      cache: "no-store",
     })
 
     if (!response.ok) {

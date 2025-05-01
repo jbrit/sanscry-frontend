@@ -6,8 +6,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
   try {
     const id = params.id
     const response = await fetch(`${API_BASE_URL}/${id}`, {
-      next: { revalidate: 60 }, // Cache for 60 seconds
+      cache: "no-store",
     })
+
+    if (response.status === 404) {
+      return NextResponse.json({ error: "Sandwich not found" }, { status: 404 })
+    }
 
     if (!response.ok) {
       throw new Error(`External API error: ${response.status}`)

@@ -8,6 +8,8 @@ import { formatDexName, formatPoolAddress, formatBotAddress, formatTokenAddress 
 import { ExternalLink, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 interface TransactionDetail {
   signature: string
@@ -38,6 +40,7 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
   const [data, setData] = useState<SandwichDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const { formatValue } = usePrice()
   const router = useRouter()
 
@@ -45,7 +48,15 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
     const fetchSandwichDetail = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/sandwiches/${sandwichId}`)
+        const response = await fetch(`/api/sandwiches/${sandwichId}`, {
+          cache: "no-store",
+        })
+
+        if (response.status === 404) {
+          setNotFound(true)
+          setError(null)
+          return
+        }
 
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`)
@@ -54,8 +65,10 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
         const result = await response.json()
         setData(result)
         setError(null)
+        setNotFound(false)
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Failed to fetch sandwich details"))
+        setNotFound(false)
       } finally {
         setLoading(false)
       }
@@ -65,23 +78,67 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
   }, [sandwichId])
 
   if (loading) {
-    return <div className="text-center py-8">Loading sandwich details...</div>
+    return (
+      <div className="container mx-auto p-4 md:p-6">
+        <div className="text-center py-8">Loading sandwich details...</div>
+      </div>
+    )
+  }
+
+  if (notFound) {
+    return (
+      <div className="container mx-auto p-4 md:p-6">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Not Found</AlertTitle>
+          <AlertDescription>The sandwich with ID {sandwichId} could not be found.</AlertDescription>
+        </Alert>
+        <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Go Back
+        </Button>
+      </div>
+    )
   }
 
   if (error) {
-    return <div className="text-center py-8 text-red-500">Error: {error.message}</div>
+    return (
+      <div className="container mx-auto p-4 md:p-6">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>Error: {error.message}</AlertDescription>
+        </Alert>
+        <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Go Back
+        </Button>
+      </div>
+    )
   }
 
   if (!data) {
-    return <div className="text-center py-8">No data available</div>
+    return (
+      <div className="container mx-auto p-4 md:p-6">
+        <div className="text-center py-8">No data available</div>
+      </div>
+    )
   }
 
   const formatTxLink = (signature: string) => {
     return `https://solscan.io/tx/${signature}`
   }
 
+  const formatAddressLink = (address: string) => {
+    return `https://solscan.io/account/${address}`
+  }
+
+  const formatTokenLink = (address: string) => {
+    return `https://solscan.io/token/${address}`
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -124,15 +181,30 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
             </div>
             <div>
               <h3 className="font-medium">Pool</h3>
-              <p className="text-sm">{formatPoolAddress(data.pool)}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{formatPoolAddress(data.pool)}</span>
+                <a href={formatAddressLink(data.pool)} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
             </div>
             <div>
               <h3 className="font-medium">Bot</h3>
-              <p className="text-sm">{formatBotAddress(data.bot)}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{formatBotAddress(data.bot)}</span>
+                <a href={formatAddressLink(data.bot)} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
             </div>
             <div>
               <h3 className="font-medium">Attacker</h3>
-              <p className="text-sm">{formatBotAddress(data.attacker)}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{formatBotAddress(data.attacker)}</span>
+                <a href={formatAddressLink(data.attacker)} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -168,8 +240,22 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
                         </a>
                       </div>
                     </TableCell>
-                    <TableCell>{formatTokenAddress(data.entry_tx.from_token)}</TableCell>
-                    <TableCell>{formatTokenAddress(data.entry_tx.to_token)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <span>{formatTokenAddress(data.entry_tx.from_token)}</span>
+                        <a href={formatTokenLink(data.entry_tx.from_token)} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <span>{formatTokenAddress(data.entry_tx.to_token)}</span>
+                        <a href={formatTokenLink(data.entry_tx.to_token)} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </div>
+                    </TableCell>
                     <TableCell>{data.entry_tx.from_token_amount.toFixed(4)}</TableCell>
                     <TableCell>{data.entry_tx.to_token_amount.toFixed(4)}</TableCell>
                     <TableCell>{data.entry_tx.jito_tip?.toFixed(8) || "0"}</TableCell>
@@ -210,9 +296,34 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
                           </a>
                         </div>
                       </TableCell>
-                      <TableCell>{tx.signer ? formatBotAddress(tx.signer) : "N/A"}</TableCell>
-                      <TableCell>{formatTokenAddress(tx.from_token)}</TableCell>
-                      <TableCell>{formatTokenAddress(tx.to_token)}</TableCell>
+                      <TableCell>
+                        {tx.signer ? (
+                          <div className="flex items-center gap-1">
+                            <span>{formatBotAddress(tx.signer)}</span>
+                            <a href={formatAddressLink(tx.signer)} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </div>
+                        ) : (
+                          "N/A"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <span>{formatTokenAddress(tx.from_token)}</span>
+                          <a href={formatTokenLink(tx.from_token)} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <span>{formatTokenAddress(tx.to_token)}</span>
+                          <a href={formatTokenLink(tx.to_token)} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </div>
+                      </TableCell>
                       <TableCell>{tx.from_token_amount.toFixed(4)}</TableCell>
                       <TableCell>{tx.to_token_amount.toFixed(4)}</TableCell>
                     </TableRow>
@@ -252,8 +363,22 @@ export function SandwichDetail({ sandwichId }: { sandwichId: string }) {
                         </a>
                       </div>
                     </TableCell>
-                    <TableCell>{formatTokenAddress(data.exit_tx.from_token)}</TableCell>
-                    <TableCell>{formatTokenAddress(data.exit_tx.to_token)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <span>{formatTokenAddress(data.exit_tx.from_token)}</span>
+                        <a href={formatTokenLink(data.exit_tx.from_token)} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <span>{formatTokenAddress(data.exit_tx.to_token)}</span>
+                        <a href={formatTokenLink(data.exit_tx.to_token)} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </div>
+                    </TableCell>
                     <TableCell>{data.exit_tx.from_token_amount.toFixed(4)}</TableCell>
                     <TableCell>{data.exit_tx.to_token_amount.toFixed(4)}</TableCell>
                     <TableCell>{data.exit_tx.jito_tip?.toFixed(8) || "0"}</TableCell>
